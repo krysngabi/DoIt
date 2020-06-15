@@ -14,15 +14,16 @@ class TasksViewController: UIViewController,UITableViewDataSource,UITableViewDel
     
     var tasks : [Task] = []
     
-    var selectedIndex = 0
-    
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
-        tasks = makeTasks();
         tabView.dataSource=self
         tabView.delegate=self
+    }
+    override func viewWillAppear(_ animated: Bool) {
+        getTasks()
+        tabView.reloadData()
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -33,36 +34,20 @@ class TasksViewController: UIViewController,UITableViewDataSource,UITableViewDel
         let task = tasks[indexPath.row]
         
         if task.important {
-            cell.textLabel?.text = "❗️\(task.name)"
+            cell.textLabel?.text = "❗️\(task.name!)"
         }else {
-            cell.textLabel?.text = task.name
+            cell.textLabel?.text = task.name!
         }
-        
+    
         
         return cell
     }
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        selectedIndex = indexPath.row
+       
         let task = tasks[indexPath.row]
         performSegue(withIdentifier: "selectTaskSegue", sender: task)
     }
-    
-    func makeTasks()->[Task] {
-        let task1 = Task()
-        task1.name = "Walk Dog"
-        task1.important = false
-        
-        let task2 = Task()
-        task2.name = "Buy Cheese"
-        task2.important = true
-        
-        let task3 = Task()
-        task3.name = "Now the lawn"
-        task3.important = false
-        
-        return [task1,task2,task3]
-        
-    }
+ 
     @IBAction func plusTapped(_ sender: Any) {
         performSegue(withIdentifier: "addSegue", sender: nil)
     }
@@ -71,17 +56,20 @@ class TasksViewController: UIViewController,UITableViewDataSource,UITableViewDel
         if segue.identifier == "selectTaskSegue" {
             let nextViewController = segue.destination as! CompleteTaskViewController
             
-            nextViewController.task = sender as! Task
+            nextViewController.task = sender as? Task
             nextViewController.previousVC = self
             
         }
         
-        if segue.identifier == "addSegue" {
-            let nextViewController = segue.destination as! CreateTaskViewController
+    }
+    func getTasks() {
+        let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+        do{
+        tasks = try context.fetch(Task.fetchRequest()) as! [Task]
             
-            nextViewController.previousVC = self
+        }catch {
+            print("OOPS WE HAVE AN ERROR")
         }
-        
     }
 }
 
